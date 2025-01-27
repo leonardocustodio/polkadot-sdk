@@ -567,6 +567,9 @@ pub mod pallet {
 			let (old_deposit, old_ids) = SubsOf::<T>::get(&sender);
 			let new_deposit = Self::subs_deposit(subs.len() as u32);
 
+			let not_other_id = subs.iter().filter_map(|i| IdentityOf::<T>::get(&i.0)).all(|i| i.0 == sender);
+			ensure!(not_other_id, Error::<T>::AlreadyClaimed);
+
 			let not_other_sub =
 				subs.iter().filter_map(|i| SuperOf::<T>::get(&i.0)).all(|i| i.0 == sender);
 			ensure!(not_other_sub, Error::<T>::AlreadyClaimed);
@@ -965,6 +968,9 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let sub = T::Lookup::lookup(sub)?;
 			ensure!(IdentityOf::<T>::contains_key(&sender), Error::<T>::NoIdentity);
+
+			// Check if the sub already has an identity.
+			ensure!(!IdentityOf::<T>::contains_key(&sub), Error::<T>::AlreadyClaimed);
 
 			// Check if it's already claimed as sub-identity.
 			ensure!(!SuperOf::<T>::contains_key(&sub), Error::<T>::AlreadyClaimed);
